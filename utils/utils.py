@@ -45,3 +45,13 @@ def generate_chat_prompt(
             else:
                 raise ValueError("Invalid role: {}".format(message["role"]))
         return message_text
+    
+def get_attributes(x: nn.Module, attributes: str):
+        """
+        gets a list of period-separated attributes
+        i.e get_attributes(model, 'transformer.encoder.layer')
+            should return the same as model.transformer.encoder.layer
+        """
+        for attr in attributes.split("."):
+            x = getattr(x, attr)
+        return x

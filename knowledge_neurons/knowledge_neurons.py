@@ -350,47 +350,55 @@ class KnowledgeNeurons:
             for neuron in ffn_neurons:
                 layer_idx, pos = neuron
                 neurons_dict[layer_idx].append(pos)
+                
             for layer_idx, stu_idx in enumerate(ffn_layers):
                 for module in ffn_module:
                     print(f"Insert Module: {module}")
                     teacher_weight = teacher_weights[module][layer_idx]
+                    student_weight = student_weights[module][layer_idx]
                     task_vector = teacher_weight.to(torch.float16)
-                    mod =  get_attributes(transformer_layers[stu_idx],
-                                        self.ff_attr_format.format(module))
-                    param = mod.weight
+                    param = get_attributes(transformer_layers[stu_idx],
+                                        self.ff_attr_format.format(module)).weight
+                    
                     key = f'model.layers.{stu_idx}.mlp.{module}.delta'
-                    delta = torch.zeros_like(param.data, dtype=task_vector.dtype, requires_grad=False)
+                    delta = torch.zeros_like(param.data, dtype=task_vector.dtype, requires_grad=True)
                     delta_clone = delta.clone()
+                    
                     if module != 'down_proj':
                         delta_clone[neurons_dict[stu_idx], :] += task_vector.to(param.dtype)
                     else:
                         delta_clone[:, neurons_dict[stu_idx]] += task_vector.to(param.dtype)
                     print(f"module: {module}, layer:{stu_idx}, delta_mean: {torch.mean(delta_clone)} max: {torch.max(delta_clone)}")
-                    pre_weight = mod.weight.clone()
-                    mod.weight += delta_clone
-                    print(mod.weight == pre_weight)
-                    print(f"modified {module}.weight!")
+                    
+                    delta_weights[key] = delta_clone
+                    setattr(get_attributes(transformer_layers[stu_idx],
+                                        self.ff_attr_format.format(module)), "delta", delta_clone)
         if attn_neurons is not None:
             neurons_dict = collections.defaultdict(list)
             for neuron in attn_neurons:
                 layer_idx, pos = neuron
                 neurons_dict[layer_idx].append(pos)
+                
             for layer_idx, stu_idx in enumerate(attn_layers):
                 for module in attn_module:
                     print(f"Insert Module: {module}")
                     teacher_weight = teacher_weights[module][layer_idx]
+                    student_weight = student_weights[module][layer_idx]
                     task_vector = teacher_weight.to(torch.float16)
-                    mod =  get_attributes(transformer_layers[stu_idx],
-                                        self.attn_attr_format.format(module))
-                    param = mod.weight
+                    param = get_attributes(transformer_layers[stu_idx],
+                                        self.attn_attr_format.format(module)).weight
+                    
                     key = f'model.layers.{stu_idx}.self_attn.{module}.delta'
-                    delta = torch.zeros_like(param.data, dtype=task_vector.dtype, requires_grad=False)
+                    delta = torch.zeros_like(param.data, dtype=task_vector.dtype, requires_grad=True)
                     delta_clone = delta.clone()
+                    
                     if module != 'o_proj':
                         delta_clone[neurons_dict[stu_idx], :] += task_vector.to(param.dtype)
                     else:
                         delta_clone[:, neurons_dict[stu_idx]] += task_vector.to(param.dtype)
                     print(f"module: {module}, layer:{stu_idx}, delta_mean: {torch.mean(delta_clone)} max: {torch.max(delta_clone)}")
-                    mod.weight += delta_clone
-                    print(f"modified {module}.weight!")
-    
+                    
+                    delta_weights[key] = delta_clone
+                    setattr(get_attributes(transformer_layers[stu_idx],
+                                        self.attn_attr_format.format(module)), "delta", delta_clone)
+        return delta_weights

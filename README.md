@@ -18,13 +18,11 @@ The comparison between LaTen and language-based transfer methods is shown as fol
 
 By conducting extensive experiments, we find that: 
 1. Comprehensive quantitative and qualitative assessments have highlighted the **Neural Incompatibility** which are similar to the cross-species neural mechanism as a key challenge arising from low-similarity of both ethological and parametric structural in cross-scale LLMs. 
-<div style="display: flex; justify-content: center; align-items: center;">
-  <div style="flex: 1; text-align: center;">
-    <img src="figures/representation_similarity.jpg" width="45%">
-  </div>
-  <div style="flex: 1; text-align: center;">
-    <img src="figures/parametric_similarity.jpg" width="45%">
-  </div>
+<div align="center">
+    <img src="figures/representation_similarity.jpg" width="80%">
+</div>
+<div align="center">
+    <img src="figures/parametric_similarity.jpg" width="80%">
 </div>
 
 
