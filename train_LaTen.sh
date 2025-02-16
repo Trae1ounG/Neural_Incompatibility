@@ -10,9 +10,9 @@ echo "Starting training LaTen for task: $task"
 echo "Task $task with lr=$lr and transfer_rate=$transfer_rate is running."
 
 python train_LaTen.py \
-    --source_model "/mnt/publiccache/huggingface/Llama-2-7b-chat-hf" \
-    --target_model "/mnt/publiccache/huggingface/llama-2-7b-chat-hf" \
-    --source_model_size "7b" \
+    --source_model "meta-llama/Llama-2-13b-chat-hf" \
+    --target_model "meta-llama/Llama-2-7b-chat-hf" \
+    --source_model_size "13b" \
     --target_model_size "7b" \
     --learning_rate "$lr" \
     --transfer_rate "$transfer_rate" \

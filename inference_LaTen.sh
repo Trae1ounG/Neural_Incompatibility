@@ -8,8 +8,10 @@ echo "Starting inference LaTen for task: $task"
 
 # Run inference with LaTen model
 python inference_LaTen.py \
-    --source_model "/mnt/usercache/huggingface/Llama-2-13b-chat-hf" \
-    --target_model "/mnt/usercache/huggingface/llama-2-7b-chat-hf" \
+    --source_model "meta-llama/Llama-2-13b-chat-hf" \
+    --target_model "meta-llama/Llama-2-7b-chat-hf" \
+    --source_model_size "13b" \
+    --target_model_size "7b" \
     --data_path "$data_path" \
     --translator_checkpoints "./knowledge_translator/gsm-transfer_rate0.1-lr3e-4" \
     --transfer_rates "$transfer_rates" \

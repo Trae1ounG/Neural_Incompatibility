@@ -1,15 +1,9 @@
 """
 Based on https://github.com/zepingyu0512/neuron-attribution
 """
-import os
-import json
 import torch
-import pickle
-import json
+import torch.nn as nn
 import gc
-import uuid
-import numpy as np
-from collections import Counter
 import functools
 from typing import Optional
 
@@ -122,3 +116,13 @@ def cuda_memory_cleanup(threshold_mb: Optional[float] = None, debug: bool = Fals
         
         return wrapper
     return decorator
+
+def get_attributes(x: nn.Module, attributes: str):
+    """
+    gets a list of period-separated attributes
+    i.e get_attributes(model, 'transformer.encoder.layer')
+        should return the same as model.transformer.encoder.layer
+    """
+    for attr in attributes.split("."):
+        x = getattr(x, attr)
+    return x
