@@ -1,5 +1,5 @@
 """
-Training for projecting the higher dimension to lower dimension.
+Hypernetwork: Training for projecting the higher dimension to lower dimension.
 """
 import torch
 import torch.nn as nn

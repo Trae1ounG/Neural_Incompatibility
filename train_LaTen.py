@@ -1,5 +1,5 @@
 """
-Knowledge translation between teacher and student models using neuron-level static localization
+LaTen: Locate-Then-Align Training Code
 """
 import torch
 import transformers
@@ -54,7 +54,6 @@ def train(
         "o_proj"
     ],
     train_on_inputs: bool = False,
-    use_chat_prompt: bool = True,
     seed: int = 42,
     transfer_rate: float = 0.1,
     print_pre_loss: bool = True
@@ -69,7 +68,6 @@ def train(
     transformers.utils.logging.set_verbosity('INFO')
     transformers.utils.logging.enable_default_handler()
     transformers.utils.logging.enable_explicit_format()
-    config = locals()
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         logger.info(
             f"Training LaTen with params:\n"
@@ -87,80 +85,36 @@ def train(
             f"lora_dropout: {lora_dropout}\n"
             f"lora_target_modules: {lora_target_modules}\n"
             f"train_on_inputs: {train_on_inputs}\n"
-            f"use_chat_prompt: {use_chat_prompt}\n"
             f"transfer_rate: {transfer_rate}\n"
             f"print_pre_loss: {print_pre_loss}\n"
         )
     assert (
         source_model
-    ), "Please specify a --source_model, e.g. --source_model='meta-llama/Llama-2-7b-hf'"
+    ), "Please specify a --source_model, e.g. --source_model='meta-llama/Llama-2-13b-chat-hf'"
     assert (
         target_model
-    ), "Please specify a --target_model, e.g. --target_model='TinyLlama/TinyLlama-1.1B-Chat-v1.0'"
+    ), "Please specify a --target_model, e.g. --target_model='meta-llama/Llama-2-7b-chat-hf'"
     
     set_seed(seed)
     
-    def generate_and_tokenize_prompt(data_point, tokenizer):
-        def tokenize(prompt, add_eos_token=True):
-            result = tokenizer(
-                prompt,
-                truncation=True,
-                max_length=cutoff_len,
-                padding=False,
-                return_tensors=None,
-            )
-            if (
-                result["input_ids"][-1] != tokenizer.eos_token_id
-                and len(result["input_ids"]) < cutoff_len
-                and add_eos_token
-            ):
-                result["input_ids"].append(tokenizer.eos_token_id)
-                result["attention_mask"].append(1)
-            result["labels"] = result["input_ids"].copy()
-            return result
-        if use_chat_prompt:
-            assert "messages" in data_point
-            full_prompt = generate_chat_prompt(
-                data_point["messages"]
-            )
-        else:
-            full_prompt = generate_prompt(
-                data_point["instruction"],
-                data_point["input"],
-                data_point["output"],
-            )
-            
-        tokenized_full_prompt = tokenize(full_prompt)
+    # Load and process data
+    if extract_data_path.endswith(".json") or extract_data_path.endswith(".jsonl"):
+        extract_data = load_dataset("json", data_files=extract_data_path)
+    else:
+        extract_data = load_dataset(extract_data_path)
+    if align_data_path.endswith(".json") or align_data_path.endswith(".jsonl"):
+        align_data = load_dataset("json", data_files=align_data_path)
+    else:
+        align_data = load_dataset(align_data_path)
         
-        if not train_on_inputs:
-            if use_chat_prompt:
-                user_prompt = generate_chat_prompt(
-                    data_point["messages"][:-1]
-                )
-                user_prompt += "<|assistant|>\n"
-            else:
-                user_prompt = generate_prompt(
-                    data_point["instruction"], data_point["input"]
-                )
-            tokenized_user_prompt = tokenize(
-                user_prompt
-            )
-            user_prompt_len = len(tokenized_user_prompt["input_ids"])
-            tokenized_full_prompt["labels"] = [
-                -100
-            ] * user_prompt_len + tokenized_full_prompt["labels"][
-                user_prompt_len:
-            ]  # could be sped up, probably
-            
-        tokenized_full_prompt['user_prompt'] = user_prompt
-        tokenized_full_prompt['response'] = full_prompt[len(user_prompt):]
-        tokenized_full_prompt['full_prompt'] = full_prompt
-        return tokenized_full_prompt
-   
+    extract_data = extract_data["train"].shuffle().map(
+        lambda x: generate_and_tokenize_prompt(x, student_tokenizer, cutoff_len, train_on_inputs)
+    )
+    align_data = align_data["train"].shuffle().map(
+        lambda x: generate_and_tokenize_prompt(x, student_tokenizer, cutoff_len, train_on_inputs)
+    )
     
-    MODEL_NAMES = {"7b": "meta-llama/Llama-2-7b-chat-hf",
-                   "13b": "meta-llama/Llama-2-13b-chat-hf"}
-    
+    #Load models    
     teacher_model = LlamaForCausalLMEdit.from_pretrained(
         source_model,
         torch_dtype=torch.float16,
@@ -176,13 +130,14 @@ def train(
     )
     logger.info(f"Teacher model:\n{teacher_model}")
     logger.info(f"Student model:\n{student_model}")
+    
+    #Load tokenizers
     teacher_tokenizer = LlamaTokenizer.from_pretrained(
         source_model
     )
     student_tokenizer = LlamaTokenizer.from_pretrained(
         target_model
     )
-    
     
     teacher_tokenizer.add_bos_token = False
     teacher_tokenizer.add_eos_token = False
@@ -214,22 +169,6 @@ def train(
     if EXTRACT_ATTN_MODULE is not None:
         EXTRACT_MODULE += EXTRACT_ATTN_MODULE
     logger.info(f"EXTRACT_MODULE:{EXTRACT_MODULE}")
-    
-    # Load data
-    if extract_data_path.endswith(".json") or extract_data_path.endswith(".jsonl"):
-        extract_data = load_dataset("json", data_files=extract_data_path)
-    else:
-        extract_data = load_dataset(extract_data_path)
-    if align_data_path.endswith(".json") or align_data_path.endswith(".jsonl"):
-        align_data = load_dataset("json", data_files=align_data_path)
-    else:
-        align_data = load_dataset(align_data_path)
-    extract_data = extract_data["train"].shuffle().map(
-        lambda x: generate_and_tokenize_prompt(x, student_tokenizer)
-    )
-    align_data = align_data["train"].shuffle().map(
-        lambda x: generate_and_tokenize_prompt(x, student_tokenizer)
-    )
     
     # Initialize knowledge translator for parameter alignment
     knowledge_translator = Knowledge_translator(EXTRACT_MODULE, student_n_layers, source_llm_hidden_dim, target_llm_hidden_dim).to("cuda:1")
@@ -264,14 +203,11 @@ def train(
         anneal_strategy='cos'
     )
     
-    # Collect training losses    
-    key_losses = collections.defaultdict(list)
-    key_pre_losses = collections.defaultdict(list)
-    
+    # Start training
     for idx in tqdm(range(total_step)):
         logger.info(f"Processing example {idx} of {total_step}")
-        item = extract_data[idx]
-        prompt, ground_truth = [item['user_prompt']], [item['response']]
+        data_point = extract_data[idx]
+        prompt, ground_truth = [data_point['user_prompt']], [data_point['response']]
         
         # Get top attribute layers
         top_attn_layer_idx, top_ffn_layer_idx = teacher_kn.get_top_attribute_layers(prompt, ground_truth, top_cnt=N_LAYERS)
@@ -308,7 +244,7 @@ def train(
         random_indices = random.sample(range(len(align_data)),15)
         batch_items = [item for item in align_data.select(random_indices)]
         # Append current locating example for alignment
-        batch_items.append(item)
+        batch_items.append(data_point)
         
         k = EXTRACT_FFN_MODULE + EXTRACT_ATTN_MODULE
         # Prepare knowledge for alignment
@@ -326,6 +262,7 @@ def train(
         total_pre_loss = 0
         num_batches = 0
         
+        # Gradient accumulation
         for i in range(0, len(batch_items), micro_batch_size):
             micro_batch = batch_items[i:i + micro_batch_size]
             max_length = cutoff_len
@@ -364,7 +301,6 @@ def train(
                 ffn_module=EXTRACT_FFN_MODULE,
                 attn_neurons=student_attn_neurons,
                 attn_module=EXTRACT_ATTN_MODULE,
-                requires_grad=True
             )
             outputs = student_kn.model(**batch_inputs, return_dict=True)
             lm_loss = outputs.loss
@@ -390,6 +326,7 @@ def train(
         logger.info("Backward done!")
 
         optimizer.step()
+        scheduler.step()
         optimizer.zero_grad()
 
         # Calculate Pre-loss
@@ -424,7 +361,7 @@ def train(
         else:
             logger.info(f"key:{k}, edited lm_loss:{avg_lm_loss}, total_loss: {avg_lm_loss}")
 
-        del teacher_knowledge, teacher_ffn_neurons, teacher_attn_neurons, cur_step_loss
+        del teacher_knowledge, teacher_ffn_neurons, teacher_attn_neurons
         gc.collect()
         torch.cuda.empty_cache()
         

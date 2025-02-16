@@ -333,14 +333,12 @@ class KnowledgeNeurons:
         self,
         teacher_weights: dict,
         student_weights: dict, 
-        ffn_layers: list,
-        attn_layers: list,
+        ffn_layers: list = None,
+        attn_layers: list = None,
         ffn_neurons: List[List[int]] = None,
         ffn_module: List[str] = None,
         attn_neurons: List[List[int]] = None,
         attn_module: List[str] = None,
-        requires_grad: bool = True,
-        quiet: bool = False,
     ) -> dict:
         transformer_layers = get_attributes(self.model, self.transformer_layers_attr)
         delta_weights = {}
