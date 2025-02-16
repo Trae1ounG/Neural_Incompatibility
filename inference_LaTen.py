@@ -4,7 +4,7 @@ LaTen: Locate-Then-Align Inference Code
 
 import torch
 import transformers
-from transformers import LlamaForCausalLM, LlamaTokenizer
+from transformers import LlamaTokenizer
 from knowledge_translator import Knowledge_translator
 from modeling_llama import LlamaForCausalLM as LlamaForCausalLMEdit
 from knowledge_neurons import KnowledgeNeurons

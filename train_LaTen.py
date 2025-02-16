@@ -3,7 +3,7 @@ LaTen: Locate-Then-Align Training Code
 """
 import torch
 import transformers
-from transformers import LlamaForCausalLM, LlamaTokenizer
+from transformers import LlamaTokenizer
 import logging
 import os
 import gc
@@ -11,7 +11,6 @@ import sys
 from typing import List
 import fire
 import random
-import collections
 from datasets import load_dataset
 from utils.utils import *
 from knowledge_translator import Knowledge_translator

@@ -3,9 +3,6 @@ Hypernetwork: Training for projecting the higher dimension to lower dimension.
 """
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from datasets import load_dataset
 
 class Knowledge_translator(nn.Module):
     def __init__(self, translate_modules, n_layers, input_dim, output_dim):
