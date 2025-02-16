@@ -96,24 +96,6 @@ def train(
     ), "Please specify a --target_model, e.g. --target_model='meta-llama/Llama-2-7b-chat-hf'"
     
     set_seed(seed)
-    
-    # Load and process data
-    if extract_data_path.endswith(".json") or extract_data_path.endswith(".jsonl"):
-        extract_data = load_dataset("json", data_files=extract_data_path)
-    else:
-        extract_data = load_dataset(extract_data_path)
-    if align_data_path.endswith(".json") or align_data_path.endswith(".jsonl"):
-        align_data = load_dataset("json", data_files=align_data_path)
-    else:
-        align_data = load_dataset(align_data_path)
-        
-    extract_data = extract_data["train"].shuffle().map(
-        lambda x: generate_and_tokenize_prompt(x, student_tokenizer, cutoff_len, train_on_inputs)
-    )
-    align_data = align_data["train"].shuffle().map(
-        lambda x: generate_and_tokenize_prompt(x, student_tokenizer, cutoff_len, train_on_inputs)
-    )
-    
     #Load models    
     teacher_model = LlamaForCausalLMEdit.from_pretrained(
         source_model,
@@ -147,6 +129,23 @@ def train(
     student_tokenizer.padding_side = "left"  # Allow batched inference
     student_tokenizer.pad_token = student_tokenizer.eos_token
     teacher_tokenizer.pad_token = teacher_tokenizer.eos_token
+    
+    # Load and process data
+    if extract_data_path.endswith(".json") or extract_data_path.endswith(".jsonl"):
+        extract_data = load_dataset("json", data_files=extract_data_path)
+    else:
+        extract_data = load_dataset(extract_data_path)
+    if align_data_path.endswith(".json") or align_data_path.endswith(".jsonl"):
+        align_data = load_dataset("json", data_files=align_data_path)
+    else:
+        align_data = load_dataset(align_data_path)
+        
+    extract_data = extract_data["train"].shuffle().map(
+        lambda x: generate_and_tokenize_prompt(x, student_tokenizer, cutoff_len, train_on_inputs)
+    )
+    align_data = align_data["train"].shuffle().map(
+        lambda x: generate_and_tokenize_prompt(x, student_tokenizer, cutoff_len, train_on_inputs)
+    )
     
     # Layer number and dimension of teacher and student model
     teacher_n_layers = LORA_PARA[source_model_size]['n_layer']

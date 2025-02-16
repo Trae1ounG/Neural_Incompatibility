@@ -8,9 +8,7 @@ import pickle
 import json
 import gc
 import uuid
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.pyplot import MultipleLocator
 from collections import Counter
 import functools
 from typing import Optional

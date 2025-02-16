@@ -15,7 +15,6 @@ import math
 import os
 from functools import partial
 from transformers import PreTrainedTokenizerBase
-from .patch import *
 from .utils import *
 
 import torch
