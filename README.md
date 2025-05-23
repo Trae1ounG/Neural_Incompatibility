@@ -1,11 +1,16 @@
 # 🤯Neural Incompatibility: The Unbridgeable Gap of Cross-Scale Parametric Knowledge Transfer in Large Language Models
 
 
-This repository is built for the paper "**Neural Incompatibility: The Unbridgeable Gap of Cross-Scale Parametric Knowledge Transfer in Large Language Models**".
-> Now we only provide the code for **LaTen** (Pre-Align PKT). We will release the full code for systematically evaluate both Pre-Align and Post-Align PKT soon.
+This repository is built for the paper "**[Neural Incompatibility: The Unbridgeable Gap of Cross-Scale Parametric Knowledge Transfer in Large Language Models](https://arxiv.org/abs/2505.14436) (accepted by ACL2025)**", for implementation of Locate-then-Align, LaTen.
+
 <div  align="center">  
 <img src="figures/icon.jpg" width="30%"> 
 </div>
+
+## 💥News💥
+* 🔥🔥🔥[**May 20, 2025**] Our paper <a href="https://arxiv.org/abs/2505.14436">Neural Incompatibility: The Unbridgeable Gap of Cross-Scale Parametric Knowledge Transfer in Large Language Models</a>" is available at [arxiv](https://arxiv.org/abs/2505.14436) !
+* 🔥🔥🔥[**May 15, 2025**] **Neural Incompatibility is accepted by ACL'25**!
+
 
 ## 🧠 Overview
 
@@ -82,3 +87,18 @@ For the evaluation, we employ [Open-Instruct](https://github.com/allenai/open-in
 
 We are grateful to the authors of [ParaKnowTransfer](https://github.com/maszhongming/ParaKnowTransfer/), [Knowledge Neurons](https://github.com/EleutherAI/knowledge-neurons), [neuron-attribution](https://github.com/zepingyu0512/neuron-attribution) and [open-instruct](https://github.com/allenai/open-instruct) for making their project codes publicly available. We build our project based on these great works.
 
+
+## Citation
+If you find our work useful in your research and would like to cite our project, please use the following citation:
+```
+@article{tan2025neural,
+  title={Neural Incompatibility: The Unbridgeable Gap of Cross-Scale Parametric Knowledge Transfer in Large Language Models},
+  author={Tan, Yuqiao and He, Shizhu and Liu, Kang and Zhao, Jun},
+  journal={arXiv preprint arXiv:2505.14436},
+  year={2025}
+}
+```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Trae1ounG/Neural_Incompatibility&type=Date)](https://star-history.com/#Trae1ounG/Neural_Incompatibility&Date)
